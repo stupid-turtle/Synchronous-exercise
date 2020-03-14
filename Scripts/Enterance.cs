@@ -14,7 +14,7 @@ public class Enterance : MonoBehaviour{
     float startTime;
     void Start(){
         string username = PlayerPrefs.GetString("username", "default");
-        recvMsg = LoadController.LoadCharacter();
+        recvMsg = new List<Msg>();
     }
 
     // Update is called once per frame
@@ -22,16 +22,16 @@ public class Enterance : MonoBehaviour{
         if (recvMsg.Count <= 2 && flag == false) {
             recvMsg = LoadController.LoadCharacter();
             for (int i = 0; i < recvMsg.Count; i++) {
-                //Debug.Log(recvMsg[i].Username);
+                Debug.Log(recvMsg[i].Username);
                 if (GameObject.Find(recvMsg[i].Username) == null) {
-                    Debug.Log(recvMsg[i].Username);
+                    //Debug.Log(recvMsg[i].Username);
                     CreateController.CreateCharacter(recvMsg[i], playerObject);
-                    //Debug.Log(flag);
                 }
             }
         }
+        Debug.Log(recvMsg.Count + "   " + flag);
         if (recvMsg.Count == 2 && flag == false) {
-            startTime = Time.time + 1f;
+            startTime = Time.time + 3f;
             flag = true;
         }
         if (flag == true && Time.time >= startTime) MoveController.MovePosition();
