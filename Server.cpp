@@ -352,7 +352,10 @@ struct Server{
             Send(fd, sss, (int)ss.size(), 2);
             //printf("%d %s\n", s.size(), sss);
         }
-        if(gameStart == true) loadlist.insert(fd);
+        if(gameStart == true){
+            loadlist.insert(fd);
+            printf("load fd %d to loadlist\n", fd);
+        }
     }
     void UserMove(int fd, char *data){
         msg.set_username(socketlist[fd]);
@@ -440,13 +443,16 @@ struct Server{
             if(gameStart == false && clientlist.size() == 2){
                 gameStart = true;
                 gettimeofday(&startTime, NULL);
+                startTime.tv_sec += 5;
             } else if (gameStart == true && clientlist.size() == 0){
                 break;
             }
+            long long diff;
             int n = epoll_wait(epoll_fd, events, MAXEVENTS, 5);
-            if(gameStart == true){
+            if(gameStart == true && loadlist.size() == 2){
                 gettimeofday(&nowTime, NULL);
-                unsigned long diff = 1000000 * (nowTime.tv_sec - startTime.tv_sec) + (nowTime.tv_usec - startTime.tv_usec);
+                diff = 1000000 * (nowTime.tv_sec - startTime.tv_sec) + (nowTime.tv_usec - startTime.tv_usec);
+                //printf("diff = %lld\n", diff);
                 if(diff >= 50000){
                     //printf("%lu\n", diff);
                     startTime.tv_usec += 50000;
@@ -513,7 +519,7 @@ struct Server{
                             UserRegister(fd, data, logpath, pospath, tagpath, rotpath);
                         } else if (msg.optype() == 2 && loadlist.size() != 2){ // load user
                             UserLoad(fd, data);
-                        } else if (msg.optype() == 3 && loadlist.size() == 2){ // move user
+                        } else if (msg.optype() == 3 && loadlist.size() == 2 && diff >= 0){ // move user
                             UserMove(fd, data);
                         }
                         if(fp1 != NULL) fclose(fp1);
