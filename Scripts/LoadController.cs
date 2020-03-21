@@ -13,7 +13,7 @@ public class LoadController {
     
     public static List<Msg> LoadCharacter() {
         Msg msg = new Msg {
-            Optype = 2
+            Optype = (1 << 2)
         };
         List<Msg> recvMsg = new List<Msg>();
         byte[] sendMsg = TransformController.Transform(msg);
@@ -23,14 +23,14 @@ public class LoadController {
             if (ClientSocket.Poll(-1, SelectMode.SelectRead)) {
                 ClientSocket.Receive(sz);
                 int n = TransformController.BytesToInt(sz, 0);
-                Debug.Log("n = " + n);
+                //Debug.Log("n = " + n);
                 for (int i = 0; i < n; i++) {
                     byte[] head = new byte[4];
                     if (ClientSocket.Poll(-1, SelectMode.SelectRead)) {
                         ClientSocket.Receive(head);
-                        Debug.Log(head[0] + " " + head[1] + " " + head[2] + " " + head[3]);
+                        //Debug.Log(head[0] + " " + head[1] + " " + head[2] + " " + head[3]);
                         int bodyLength = TransformController.BytesToInt(head, 0);
-                        Debug.Log("should   " + bodyLength);
+                        //Debug.Log("should   " + bodyLength);
                         byte[] body = new byte[bodyLength];
                         if (ClientSocket.Poll(-1, SelectMode.SelectRead) && bodyLength != 0) {
                             ClientSocket.Receive(body);
