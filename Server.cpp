@@ -30,10 +30,11 @@ struct Server{
     struct epoll_event event;
     struct epoll_event* events;
     FILE *fp1, *fp2, *fp3, *fp4, *fp5;
-    std::list<int> clientlist;
-    std::set<int> loadlist;
-    std::map<int,std::string> socketlist;
-    std::map<int,Msg> movelist;
+    std::list<int> clientList;
+    std::set<int> loadList;
+    std::map<int,std::string> socketList;
+    std::map<int,Msg> moveList;
+    std::map<int,Msg> skillList;
     std::string str;
     std::vector<std::vector<std::string> > vvs;
     Msg msg;
@@ -42,7 +43,7 @@ struct Server{
     int framenum;
     void Init(){
         this->port = 3360;
-        (this->clientlist).clear();
+        (this->clientList).clear();
         this->headLength = 4;
         this->nowHeadLength = 0;
         this->bodyLength = 0;
@@ -51,7 +52,7 @@ struct Server{
         this->gameStart = false;
         this->framenum = 0;
         (this->vvs).clear();
-        (this->loadlist).clear();
+        (this->loadList).clear();
     }
     void Release(){
         if((this->events) != NULL) free(this->events);
@@ -72,16 +73,20 @@ struct Server{
         if(ret == -1){
             printf("send to socket: %d error, errno = %d (%s)\n",fd, errno, strerror(errno));
         }
-        printf("send type = %d\n", type);
-        for(int i = 0; i < len; i ++ ) printf("%u ", data[i]); printf("\n");
+        /*if(type == 4){
+            printf("send type = %d\n", type);
+            for(int i = 0; i < len; i ++ ) printf("%u ", data[i]); printf("\n");
+        }*/
     }
     void Send(int fd, unsigned char *data, int len, int type){
         int ret = send(fd, data, len , 0);
         if(ret == -1){
             printf("send to socket: %d error, errno = %d (%s)\n",fd, errno, strerror(errno));
         }
-        printf("send type = %d\n", type);
-        for(int i = 0; i < len; i ++ ) printf("%u ", data[i]); printf("\n");
+        /*if(type == 4){
+            printf("send type = %d\n", type);
+            for(int i = 0; i < len; i ++ ) printf("%u ", data[i]); printf("\n");
+        }*/
     }
     bool SetServerSocket(){
         listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -208,23 +213,27 @@ struct Server{
             fgets(t, 50, fp3);
             t[strlen(t)-1] = '\0';
             double posnum = strtod(t, NULL);
-            printf("%.f\n",posnum);
+            //printf("%.f\n",posnum);
         }
         fclose(fp3);
     }
     void ListNowClientlist(){
-        std::list<int>::iterator it = clientlist.begin();
-        while(it != clientlist.end()){
-            printf("%d ",*it);
+        std::list<int>::iterator it = clientList.begin();
+        while(it != clientList.end()){
+            //printf("%d ",*it);
             it++;
         }
-        printf("\n");
+        //printf("\n");
+    }
+    void AddEmptyMsg(int fd){
+        Msg msgtmp;
+        moveList[fd] = msgtmp;
     }
     void AddClientUser(int fd){
-        clientlist.push_back(fd);
+        clientList.push_back(fd);
     }
     void CreateSocket(int fd){
-        socketlist[fd] = msg.username();
+        socketList[fd] = msg.username();
     }
     void UserLogin(int fd, char *data, char *logpath, char *tagpath){
         if(fp1 == NULL){ // user not found
@@ -237,6 +246,8 @@ struct Server{
                     SendMsgToClient(fd, data, '2');
                     // change login mode
                     WriteMsgToTxt("1", fopen(tagpath, "w"));
+                    // add empty message
+                    AddEmptyMsg(fd);
                     // add now client to clientlist
                     AddClientUser(fd);
                     // create socket and add username to map
@@ -248,11 +259,7 @@ struct Server{
                 SendMsgToClient(fd, data, '4');
             }
         }
-    }
-    void AddEmptyMsg(int fd){
-        Msg msgtmp;
-        movelist[fd] = msgtmp;
-    }
+    } 
     void CreateUserMsg(int fd, char *data, char *logpath){
         fp2 = fopen(logpath, "a+");
         fputs((char*)msg.userpwd().c_str(), fp2);
@@ -282,9 +289,7 @@ struct Server{
         //printf("!!!\n");
         if(fp1 != NULL){ // user already exist
             SendMsgToClient(fd, data, '1');
-        } else { // can register
-            // add an empty msg
-            AddEmptyMsg(fd);
+        } else { // can register 
             // create login_msg_txt to user_list
             CreateUserMsg(fd, data, logpath);
             // create pos_txt to user_pos
@@ -296,18 +301,18 @@ struct Server{
         }
     }
     void UserLoad(int fd, char *data){
-        printf("++++++++++++++++++++++++++++++++++  %d\n",loadlist.size());
-        if(loadlist.find(fd) != loadlist.end()){
+        //printf("++++++++++++++++++++++++++++++++++  %d\n",loadList.size());
+        if(loadList.find(fd) != loadList.end()){
             return;
         }
-        int sz = (int)clientlist.size();
+        int sz = (int)clientList.size();
         //printf("%d\n",sz);
         unsigned char head[4];
         IntToBytes(head, sz);
         //for(int i=0;i<4;i++) printf("%d ",head[i]); printf("\n");
         Send(fd, head, sizeof(head), 1);
-        for(std::list<int>::iterator it = clientlist.begin(); it != clientlist.end(); it++){
-            std::string nowuser = socketlist[(*it)];
+        for(std::list<int>::iterator it = clientList.begin(); it != clientList.end(); it++){
+            std::string nowuser = socketList[(*it)];
             Msg msgtmp;
             msgtmp.set_username(nowuser);
             //printf("%s\n",(char*)nowuser.c_str());
@@ -353,25 +358,68 @@ struct Server{
             //printf("%d %s\n", s.size(), sss);
         }
         if(gameStart == true){
-            loadlist.insert(fd);
+            loadList.insert(fd);
             printf("load fd %d to loadlist\n", fd);
         }
     }
-    void UserMove(int fd, char *data){
-        msg.set_username(socketlist[fd]);
+    void UserMove(int fd, char *data, int type){
+        if(type == 1){
+            //printf("%d %.4f %.4f %.4f\n", fd, msg.posx(), msg.posy(), msg.posz());
+            msg.set_username(socketList[fd]);
+        } else {
+            int optype = 0;
+            for(int i = 0; i < 30; i++){
+                if(i != 3) optype |= (1 << i);
+            }
+            optype &= msg.optype();
+            msg.set_optype(optype);
+        }
         //printf("%.4f %.4f %.4f\n", msg.posx(), msg.posy(), msg.posz());
-        movelist[fd] = msg; 
+        moveList[fd] = msg; 
+    }
+    void UserSkill(int fd, int type){
+        if(type == 1){
+            msg.set_username(socketList[fd]);
+            printf("client %d = %s\n", fd, msg.username().c_str());
+        } else {
+            int optype = 0;
+            for(int i = 0; i < 30; i++){
+                if(i != 4) optype |= (1 << i);
+            }
+            optype &= msg.optype();
+            msg.set_optype(optype);
+        }
+        skillList[fd] = msg;
     }
     void SendMsgToClients(){
     
         unsigned char head[4];
         std::vector<std::string> vs;
-        for(std::list<int>::iterator it = clientlist.begin(); it != clientlist.end(); it++){
+        for(std::list<int>::iterator it = clientList.begin(); it != clientList.end(); it++){
             int now_fd = *it;
-            Msg msgtmp = movelist[now_fd];
-            printf("%d %.4f %.4f %.4f\n", now_fd, msgtmp.posx(), msgtmp.posy(), msgtmp.posz());
-            msgtmp.set_frame(framenum);
-            std::string s = msgtmp.SerializeAsString();
+            Msg movemsg = moveList[now_fd];
+            Msg skillmsg = skillList[now_fd];
+            UserSkill(now_fd, 0);
+            Msg sendmsg;
+            int optype = 0;
+            if((movemsg.optype() & (1 << 3)) != 0) optype += (1 << 3);
+            if((skillmsg.optype() & (1 << 4)) != 0){
+                optype += (1 << 4);
+                printf("%d skill = Yes!\n", now_fd);
+            }
+            //printf("now fd = %d     optype = %d\n", now_fd, optype);
+            sendmsg.set_optype(optype);
+            sendmsg.set_username(movemsg.username());
+            sendmsg.set_posx(movemsg.posx());
+            sendmsg.set_posy(movemsg.posy());
+            sendmsg.set_posz(movemsg.posz());
+            sendmsg.set_rotx(movemsg.rotx());
+            sendmsg.set_roty(movemsg.roty());
+            sendmsg.set_rotz(movemsg.rotz());
+            //sendmsg.set_nextattack(framenum + skillmsg.nextattack() - 1);
+            //printf("%d %.4f %.4f %.4f\n", now_fd, movemsg.posx(), movemsg.posy(), movemsg.posz());
+            sendmsg.set_frame(framenum);
+            std::string s = sendmsg.SerializeAsString();
             IntToBytes(head, (int)s.size());
             std::string ss = "";
             for(int i = 0; i < 4; i++ ) ss += head[i];
@@ -386,7 +434,7 @@ struct Server{
         vvs.push_back(vs);
         int sz = (int)vs.size();
         IntToBytes(head, sz);
-        for(std::list<int>::iterator it = clientlist.begin(); it != clientlist.end(); it++){
+        for(std::list<int>::iterator it = clientList.begin(); it != clientList.end(); it++){
             int now_fd = *it;
             Send(now_fd, head, sizeof(head), 3);
             for(std::vector<std::string>::iterator itt = vs.begin(); itt != vs.end(); itt++){
@@ -409,12 +457,12 @@ struct Server{
     bool CloseSocket(int fd){
         printf("socket %d closed\n", fd);
         // delete socket_fd;
-        clientlist.remove(fd);
+        clientList.remove(fd);
         // get username
-        std::map<int,std::string>::iterator it = socketlist.find(fd);
-        if(it != socketlist.end()){
-            WriteMsgToTxt("0", fopen((char*)("/root/user_login/" + socketlist[fd] + ".txt").c_str(), "w"));
-            socketlist.erase(it);
+        std::map<int,std::string>::iterator it = socketList.find(fd);
+        if(it != socketList.end()){
+            WriteMsgToTxt("0", fopen((char*)("/root/user_login/" + socketList[fd] + ".txt").c_str(), "w"));
+            socketList.erase(it);
         }
         int ret = close(fd);
         if(ret == -1){
@@ -437,19 +485,19 @@ struct Server{
         ret[2] = (unsigned char)((src >> 16) & 0xff);
         ret[3] = (unsigned char)((src >> 24) & 0xff);
     }
-    void Work(){
+    void Work(int peoplenum){
         while(true){
-            //printf("%d\n",clientlist.size());
-            if(gameStart == false && clientlist.size() == 2){
+            //printf("%d\n",clientList.size());
+            if(gameStart == false && clientList.size() == peoplenum){
                 gameStart = true;
                 gettimeofday(&startTime, NULL);
-                startTime.tv_sec += 5;
-            } else if (gameStart == true && clientlist.size() == 0){
+                //startTime.tv_sec += 5;
+            } else if (gameStart == true && clientList.size() == 0){
                 break;
             }
             long long diff;
             int n = epoll_wait(epoll_fd, events, MAXEVENTS, 5);
-            if(gameStart == true && loadlist.size() == 2){
+            if(gameStart == true && loadList.size() == peoplenum){
                 gettimeofday(&nowTime, NULL);
                 diff = 1000000 * (nowTime.tv_sec - startTime.tv_sec) + (nowTime.tv_usec - startTime.tv_usec);
                 //printf("diff = %lld\n", diff);
@@ -513,14 +561,25 @@ struct Server{
                         fp1 = fopen(logpath, "r");
                         // user operation
                         memset(data, 0, 1024);
-                        if(msg.optype() == 0){ // login
+                        if((msg.optype() & (1 << 4)) != 0) printf("skill release Yes\n");
+                        if((msg.optype() & (1 << 0)) != 0){ // login
                             UserLogin(fd, data, logpath, tagpath);
-                        } else if (msg.optype() == 1){ // register
+                        }
+                        if ((msg.optype() & (1 << 1)) != 0){ // register
                             UserRegister(fd, data, logpath, pospath, tagpath, rotpath);
-                        } else if (msg.optype() == 2 && loadlist.size() != 2){ // load user
+                        }
+                        if ((msg.optype() & (1 << 2)) != 0 && loadList.size() != peoplenum){ // load user
                             UserLoad(fd, data);
-                        } else if (msg.optype() == 3 && loadlist.size() == 2 && diff >= 0){ // move user
-                            UserMove(fd, data);
+                        }
+                        if ((msg.optype() & (1 << 3)) != 0 && loadList.size() == peoplenum && diff >= 0){ // move user
+                            UserMove(fd, data, 1);
+                        } else {
+                            UserMove(fd, data, 0);
+                        }
+                        if ((msg.optype() & (1 << 4)) != 0 && loadList.size() == peoplenum && diff >= 0){ // release skill
+                            printf("before release %d  %d  %d\n", fd, msg.optype() & (1 << 4), skillList[fd].optype() & (1 << 4));
+                            UserSkill(fd, 1);
+                            printf("after release %d  %d  %d\n", fd, msg.optype() & (1 << 4), skillList[fd].optype() & (1 << 4));
                         }
                         if(fp1 != NULL) fclose(fp1);
                     }
@@ -543,7 +602,7 @@ int main(int argc, char** argv){
     server.Init();
     if (argc > 1) server.SetPort(atoi(argv[1]));
     if (!server.SetServerSocket()) return 0;
-    server.Work();
+    server.Work(2);
     server.Release();
     return 0;
 }

@@ -22,15 +22,15 @@ public static partial class ProtobufLowReflection {
   static ProtobufLowReflection() {
     byte[] descriptorData = global::System.Convert.FromBase64String(
         string.Concat(
-          "ChJwcm90b2J1Zl9sb3cucHJvdG8imwEKA01zZxIOCgZvcHR5cGUYASABKAUS",
+          "ChJwcm90b2J1Zl9sb3cucHJvdG8irwEKA01zZxIOCgZvcHR5cGUYASABKAUS",
           "EAoIdXNlcm5hbWUYAiABKAkSDwoHdXNlcnB3ZBgDIAEoCRIMCgRwb3N4GAQg",
           "ASgCEgwKBHBvc3kYBSABKAISDAoEcG9zehgGIAEoAhIMCgRyb3R4GAcgASgC",
-          "EgwKBHJvdHkYCCABKAISDAoEcm90ehgJIAEoAhINCgVmcmFtZRgKIAEoBWIG",
-          "cHJvdG8z"));
+          "EgwKBHJvdHkYCCABKAISDAoEcm90ehgJIAEoAhINCgVmcmFtZRgKIAEoBRIS",
+          "CgpuZXh0YXR0YWNrGAsgASgFYgZwcm90bzM="));
     descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
         new pbr::FileDescriptor[] { },
         new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-          new pbr::GeneratedClrTypeInfo(typeof(global::Msg), global::Msg.Parser, new[]{ "Optype", "Username", "Userpwd", "Posx", "Posy", "Posz", "Rotx", "Roty", "Rotz", "Frame" }, null, null, null)
+          new pbr::GeneratedClrTypeInfo(typeof(global::Msg), global::Msg.Parser, new[]{ "Optype", "Username", "Userpwd", "Posx", "Posy", "Posz", "Rotx", "Roty", "Rotz", "Frame", "Nextattack" }, null, null, null)
         }));
   }
   #endregion
@@ -72,6 +72,7 @@ public sealed partial class Msg : pb::IMessage<Msg> {
     roty_ = other.roty_;
     rotz_ = other.rotz_;
     frame_ = other.frame_;
+    nextattack_ = other.nextattack_;
     _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
   }
 
@@ -190,6 +191,17 @@ public sealed partial class Msg : pb::IMessage<Msg> {
     }
   }
 
+  /// <summary>Field number for the "nextattack" field.</summary>
+  public const int NextattackFieldNumber = 11;
+  private int nextattack_;
+  [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+  public int Nextattack {
+    get { return nextattack_; }
+    set {
+      nextattack_ = value;
+    }
+  }
+
   [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
   public override bool Equals(object other) {
     return Equals(other as Msg);
@@ -213,6 +225,7 @@ public sealed partial class Msg : pb::IMessage<Msg> {
     if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Roty, other.Roty)) return false;
     if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Rotz, other.Rotz)) return false;
     if (Frame != other.Frame) return false;
+    if (Nextattack != other.Nextattack) return false;
     return Equals(_unknownFields, other._unknownFields);
   }
 
@@ -229,6 +242,7 @@ public sealed partial class Msg : pb::IMessage<Msg> {
     if (Roty != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Roty);
     if (Rotz != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Rotz);
     if (Frame != 0) hash ^= Frame.GetHashCode();
+    if (Nextattack != 0) hash ^= Nextattack.GetHashCode();
     if (_unknownFields != null) {
       hash ^= _unknownFields.GetHashCode();
     }
@@ -282,6 +296,10 @@ public sealed partial class Msg : pb::IMessage<Msg> {
       output.WriteRawTag(80);
       output.WriteInt32(Frame);
     }
+    if (Nextattack != 0) {
+      output.WriteRawTag(88);
+      output.WriteInt32(Nextattack);
+    }
     if (_unknownFields != null) {
       _unknownFields.WriteTo(output);
     }
@@ -319,6 +337,9 @@ public sealed partial class Msg : pb::IMessage<Msg> {
     }
     if (Frame != 0) {
       size += 1 + pb::CodedOutputStream.ComputeInt32Size(Frame);
+    }
+    if (Nextattack != 0) {
+      size += 1 + pb::CodedOutputStream.ComputeInt32Size(Nextattack);
     }
     if (_unknownFields != null) {
       size += _unknownFields.CalculateSize();
@@ -360,6 +381,9 @@ public sealed partial class Msg : pb::IMessage<Msg> {
     }
     if (other.Frame != 0) {
       Frame = other.Frame;
+    }
+    if (other.Nextattack != 0) {
+      Nextattack = other.Nextattack;
     }
     _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
   }
@@ -410,6 +434,10 @@ public sealed partial class Msg : pb::IMessage<Msg> {
         }
         case 80: {
           Frame = input.ReadInt32();
+          break;
+        }
+        case 88: {
+          Nextattack = input.ReadInt32();
           break;
         }
       }
