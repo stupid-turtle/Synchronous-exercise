@@ -34,7 +34,7 @@ struct Server{
     std::set<int> loadList;
     std::map<int,std::string> socketList;
     std::map<int,Msg> moveList;
-    std::map<int,Msg> skillList;
+    std::map<int,Msg> skillList[2];
     std::string str;
     std::vector<std::vector<std::string> > vvs;
     Msg msg;
@@ -377,19 +377,22 @@ struct Server{
         //printf("%.4f %.4f %.4f\n", msg.posx(), msg.posy(), msg.posz());
         moveList[fd] = msg; 
     }
-    void UserSkill(int fd, int type){
+    void UserSkill(int fd, int type, int skillnum){
         if(type == 1){
             msg.set_username(socketList[fd]);
-            printf("client %d = %s\n", fd, msg.username().c_str());
+            printf("client %d = %s, skill = %d\n", fd, msg.username().c_str(), skillnum);
+            skillList[skillnum][fd] = msg;
         } else {
             int optype = 0;
-            for(int i = 0; i < 30; i++){
-                if(i != 4) optype |= (1 << i);
+            for (int i = 0; i < 3; i++) {
+                optype |= (1 << i);
             }
             optype &= msg.optype();
             msg.set_optype(optype);
+            for (int i = 4; i < 6; i++){
+                skillList[i - 4][fd] = msg;
+            }
         }
-        skillList[fd] = msg;
     }
     void SendMsgToClients(){
     
@@ -398,15 +401,17 @@ struct Server{
         for(std::list<int>::iterator it = clientList.begin(); it != clientList.end(); it++){
             int now_fd = *it;
             Msg movemsg = moveList[now_fd];
-            Msg skillmsg = skillList[now_fd];
-            UserSkill(now_fd, 0);
             Msg sendmsg;
             int optype = 0;
             if((movemsg.optype() & (1 << 3)) != 0) optype += (1 << 3);
-            if((skillmsg.optype() & (1 << 4)) != 0){
-                optype += (1 << 4);
-                printf("%d skill = Yes!\n", now_fd);
+            for (int i = 4; i < 6; i++) {
+                Msg skillmsg = skillList[i - 4][now_fd];
+                if((skillmsg.optype() & (1 << i)) != 0){
+                    optype += (1 << i);
+                    printf("%d skill %d = Yes!\n", now_fd, i);
+                }
             }
+            UserSkill(now_fd, 0, -1);
             //printf("now fd = %d     optype = %d\n", now_fd, optype);
             sendmsg.set_optype(optype);
             sendmsg.set_username(movemsg.username());
@@ -576,10 +581,13 @@ struct Server{
                         } else {
                             UserMove(fd, data, 0);
                         }
-                        if ((msg.optype() & (1 << 4)) != 0 && loadList.size() == peoplenum && diff >= 0){ // release skill
-                            printf("before release %d  %d  %d\n", fd, msg.optype() & (1 << 4), skillList[fd].optype() & (1 << 4));
-                            UserSkill(fd, 1);
-                            printf("after release %d  %d  %d\n", fd, msg.optype() & (1 << 4), skillList[fd].optype() & (1 << 4));
+                        if ((msg.optype() & (1 << 4)) != 0 && loadList.size() == peoplenum && diff >= 0){ // release skill0
+                            //printf("before release %d  %d  %d\n", fd, msg.optype() & (1 << 4), skillList[0][fd].optype() & (1 << 4));
+                            UserSkill(fd, 1, 0);
+                            //printf("after release %d  %d  %d\n", fd, msg.optype() & (1 << 4), skillList[0][fd].optype() & (1 << 4));
+                        }
+                        if ((msg.optype() & (1 << 5)) != 0 && loadList.size() == peoplenum && diff >= 0){ // release skill1
+                            UserSkill(fd, 1, 1);
                         }
                         if(fp1 != NULL) fclose(fp1);
                     }
