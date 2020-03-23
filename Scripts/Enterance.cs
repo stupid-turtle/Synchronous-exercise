@@ -9,6 +9,8 @@ using UnityEngine.UI;
 public class Enterance : MonoBehaviour{
 
     public GameObject playerObject;
+    public Button Skill0Button;
+    public Text Skill0CD;
     public Button Skill1Button;
     public Text Skill1CD;
 
@@ -45,7 +47,7 @@ public class Enterance : MonoBehaviour{
         //Debug.Log(recvMsg.Count + "   " + flag);
         if (recvMsg.Count == peopleNum && flag == false) {
             for (int i = 0; i < peopleNum; i++) {
-                Debug.Log("index = " + i + ", name = " + ModelLayer.playerName[i] + ", id = " + ModelLayer.playerMap[ModelLayer.playerName[i]]);
+                Debug.Log("index = " + i + ", name = " + ModelLayer.PlayerName[i] + ", id = " + ModelLayer.PlayerMap[ModelLayer.PlayerName[i]]);
             }
             startTime = Time.time + 3f;
             flag = true;
@@ -53,22 +55,39 @@ public class Enterance : MonoBehaviour{
 
         ///////////////////  Player Operation
         if (flag == true && Time.time >= startTime) {
-            ModelLayer.RefreshMessage();
+            ModelLayer.RefreshMessage(username);
             ModelLayer.MovePosition(username);
             //Debug.Log("1    " + ModelLayer.msg.Optype);
-            Skill1Button.onClick.AddListener(ModelLayer.ReleaseSkill1);
+            Skill0Button.onClick.AddListener(
+                delegate {
+                    ModelLayer.ReleaseSkill0(username);
+                }
+            );
+            Skill1Button.onClick.AddListener(
+                delegate {
+                    ModelLayer.ReleaseSkill1(username);
+                }
+            );
+            
             //Debug.Log("2    " +  ModelLayer.msg.Optype + "   " + ModelLayer.skillQueue.Count);
             ModelLayer.SendMessage();
             //Debug.Log("3    " + ModelLayer.msg.Optype);
             ModelLayer.ReceiveMessage();
-            int userId = ModelLayer.playerMap[username];
+            int userId = ModelLayer.PlayerMap[username];
 
-            int diff = ModelLayer.skillNextFrame[userId] - ModelLayer.clientFrame;
+            int diff = ModelLayer.SkillNextFrame[userId][0] - ModelLayer.clientFrame;
+            if (diff >= 0) {
+                Skill0CD.text = (diff / 20).ToString();
+            } else {
+                Skill0CD.text = "";
+            }
+            diff = ModelLayer.SkillNextFrame[userId][1] - ModelLayer.clientFrame;
             if (diff >= 0) {
                 Skill1CD.text = (diff / 20).ToString();
             } else {
                 Skill1CD.text = "";
             }
+
 
             ViewLayer.MovePosition();
             ViewLayer.PlayerAnimation();
