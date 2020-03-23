@@ -16,33 +16,34 @@ public class ViewLayer {
     }
 
     public static void MovePosition() {
-        foreach (int id in ModelLayer.nowAliveIndex) {
-            string username = ModelLayer.playerName[id];
+        foreach (int id in ModelLayer.NowAliveIndex) {
+            string username = ModelLayer.PlayerName[id];
             GameObject nowGameObject = GameObject.Find(username);
-            nowGameObject.transform.position = ModelLayer.playerPos[id];
+            nowGameObject.transform.position = ModelLayer.PlayerPos[id];
         }
     }
 
     public static void PlayerAnimation() {
         Queue<int> deleteQueue = new Queue<int>();
-        foreach (int x in ModelLayer.nowAliveIndex) {
+        foreach (int x in ModelLayer.NowAliveIndex) {
             if (ModelLayer.IsDie[x] == true) {
                 deleteQueue.Enqueue(x);
                 continue;
             } else {
-                GameObject nowGameObjcet = GameObject.Find(ModelLayer.playerName[x]);
+                GameObject nowGameObjcet = GameObject.Find(ModelLayer.PlayerName[x]);
                 Animator nowAnimator = nowGameObjcet.GetComponent<Animator>();
                 //Debug.Log(nowGameObjcet.name + "   " + ModelLayer.IsWalking[x]);
-                nowAnimator.SetBool("IsSkill1", ModelLayer.IsSkill1[x]);
+                nowAnimator.SetBool("IsSkill0", ModelLayer.IsSkill[x][0]);
+                nowAnimator.SetBool("IsSkill1", ModelLayer.IsSkill[x][1]);
                 nowAnimator.SetBool("IsWalking", ModelLayer.IsWalking[x]);
             }
         }
         int del = 0;
         while (deleteQueue.Count != 0) {
             int top = deleteQueue.Dequeue();
-            GameObject nowGameObject = GameObject.Find(ModelLayer.playerName[top]);
+            GameObject nowGameObject = GameObject.Find(ModelLayer.PlayerName[top]);
             Object.Destroy(nowGameObject);
-            ModelLayer.nowAliveIndex.Remove(top);
+            ModelLayer.NowAliveIndex.Remove(top);
             del++;
         }
     }

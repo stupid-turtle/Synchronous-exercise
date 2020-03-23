@@ -18,14 +18,14 @@ public class BloodFollowController : MonoBehaviour{
     void Start() {
         mainCamera = Camera.main;
         username = gameObject.name;
-        playerId = ModelLayer.playerMap[username];
+        playerId = ModelLayer.PlayerMap[username];
         float size_y = GetComponent<Renderer>().bounds.size.y;
         height = size_y;
     }
 
     void Update() {
-        totHealthPoint = ModelLayer.totHealthPotnt[playerId];
-        nowHealthPoint = ModelLayer.nowHealthPoint[playerId];
+        totHealthPoint = ModelLayer.TotHealthPotnt[playerId];
+        nowHealthPoint = ModelLayer.NowHealthPoint[playerId];
         mainCamera = Camera.main;
         float size_y = GetComponent<Collider>().bounds.size.y;
         float scal_y = transform.localScale.y;

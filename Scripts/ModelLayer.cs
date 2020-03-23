@@ -3,35 +3,30 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Net;
 using System.Net.Sockets;
+using UnityEngine.UI;
 
 public class ModelLayer {
     
-    public static List<string> playerName = new List<string>();                   // playerName[i]   i-th player's name
-    public static List<Vector3> playerPos = new List<Vector3>();                   // playerPos[i]   i-th player's position
-    public static List<Vector3> playerRot = new List<Vector3>();                   // playerRot[i]   i-th player's rotation
-    public static List<int> nowHealthPoint = new List<int>();                 // nowHealthPoint[i]   i-th player's now healthpoint
-    public static List<int> totHealthPotnt = new List<int>();                 // totHealthPoint[i]   i-th player's tot healthpoint
-    public static List<float> playerRadius = new List<float>();                 // playerRadius[i]   i-th player's radius
+    public static List<string> PlayerName = new List<string>();                   // playerName[i]   i-th player's name
+    public static List<Vector3> PlayerPos = new List<Vector3>();                   // playerPos[i]   i-th player's position
+    public static List<Vector3> PlayerRot = new List<Vector3>();                   // playerRot[i]   i-th player's rotation
+    public static List<int> NowHealthPoint = new List<int>();                 // nowHealthPoint[i]   i-th player's now healthpoint
+    public static List<int> TotHealthPotnt = new List<int>();                 // totHealthPoint[i]   i-th player's tot healthpoint
+    public static List<float> PlayerRadius = new List<float>();                 // playerRadius[i]   i-th player's radius
 
-    public static List<int> skillNextFrame = new List<int>();                 // skillNextFrame[i]   i-th player's skill next release frame
-    public static List<int> skillCoolDown = new List<int>();                   // skillCoolDown[i]   i-th player's skill cd
-    public static List<int> skillDamage = new List<int>();                       // skillDamage[i]   i-th player's skill damage
-    public static List<int> skillTag = new List<int>();                             // skillTag[i]   i-th player's skill use or not
-    public static List<List<int>> skillAttackFrame = new List<List<int>>(); // skillAttackFrame[i]   i-th player's skill attack frame
-    public static List<int> skillTotFrame = new List<int>();                   // skillTotFrame[i]   i-th player's skill tot frame
-    public static List<float> skillRadius = new List<float>();                   // skillRadius[i]   i-th player's skill radius
-    public static List<int> skillAreaType = new List<int>();                   // skillAreaType[i]   i-th player's skill area type
-    public static List<int> skillAnimation = new List<int>();                 // skillAnimation[i]   i-th player's skill animation state
+    public static List<List<int>> SkillNextFrame = new List<List<int>>();     // skillNextFrame[i]   i-th player's skill next release frame
+    public static List<List<int>> SkillTag = new List<List<int>>();                 // skillTag[i]   i-th player's skill use or not
+    public static List<List<int>> SkillAnimation = new List<List<int>>();     // skillAnimation[i]   i-th player's skill animation state
 
     public static List<bool> IsDie = new List<bool>();                                 // IsDie[i]   i-th player die or not
     public static List<bool> IsWalking = new List<bool>();                         // IsWalking[i]   i-th player is walking or not
-    public static List<bool> IsSkill1 = new List<bool>();                           // IsSkill1[i]   i-th player is using skill1 or not
-    public static List<int> nowAliveIndex = new List<int>();                   // nowAliveIndex[i]   the set of the index of now alive player
+    public static List<List<bool>> IsSkill = new List<List<bool>>();                 // IsSkill[i]   i-th player is using skill[j] or not
+    public static List<int> NowAliveIndex = new List<int>();                   // nowAliveIndex[i]   the set of the index of now alive player
     
-    public static Queue<int> skillQueue = new Queue<int>();                          // player release skill queue
-    public static Dictionary<string, int> playerMap = new Dictionary<string, int>(); // player name  ->  player id
+    public static Queue<int> SkillQueue = new Queue<int>();                          // player release skill queue
+    public static Dictionary<string, int> PlayerMap = new Dictionary<string, int>(); // player name  ->  player id
 
-    public static List<Skill> allSkillRelease = new List<Skill>();                         // all skill frame
+    public static List<Skill> AllSkillRelease = new List<Skill>();                         // all skill frame
     
     public class Skill {
         public int releasePlayerIndex;
@@ -63,39 +58,46 @@ public class ModelLayer {
     static Socket ClientSocket = GlobalController.instance.ClientSocket;
 
     public static int clientFrame;
-    
+
+    public static SkillConfig skills = Resources.Load("SkillConfig/Warrior") as SkillConfig;
 
     public static void CreateCharacter(Msg recvMsg) {
-        nowAliveIndex.Add(playerName.Count);
-        playerMap.Add(recvMsg.Username, playerName.Count);
-        playerName.Add(recvMsg.Username);
-        playerPos.Add(new Vector3(recvMsg.Posx, recvMsg.Posy, recvMsg.Posz));
-        playerRot.Add(new Vector3(recvMsg.Rotx, recvMsg.Roty, recvMsg.Rotz));
-        playerRadius.Add(0.5f);
+        int playerId = PlayerName.Count;
+        NowAliveIndex.Add(playerId);
+        PlayerMap.Add(recvMsg.Username, playerId);
+        PlayerName.Add(recvMsg.Username);
+        PlayerPos.Add(new Vector3(recvMsg.Posx, recvMsg.Posy, recvMsg.Posz));
+        PlayerRot.Add(new Vector3(recvMsg.Rotx, recvMsg.Roty, recvMsg.Rotz));
+        PlayerRadius.Add(0.5f);
 
-        skillNextFrame.Add(0);
-        skillCoolDown.Add(100);
-        skillDamage.Add(10);
-        skillTag.Add(0);
-        skillTotFrame.Add(30);
-        List<int> tmp = new List<int> {
-            8
-        };
-        skillAttackFrame.Add(tmp);
-        skillRadius.Add(2f);
-        skillAreaType.Add(1);
-        skillAnimation.Add(0);
+        List<int> skillNextFrameTmp = new List<int>();
+        SkillNextFrame.Add(skillNextFrameTmp);
+        List<int> skillTagTmp = new List<int>();
+        SkillTag.Add(skillTagTmp);
+        List<int> skillAnimationTmp = new List<int>();
+        SkillAnimation.Add(skillAnimationTmp);
+        List<bool> IsSkillTmp = new List<bool>();
+        IsSkill.Add(IsSkillTmp);
+
+        for (int i = 0; i < skills.skill_config_list.Count; i++) {
+            SkillNextFrame[playerId].Add(0);
+            SkillTag[playerId].Add(0);
+            SkillAnimation[playerId].Add(0);
+            IsSkill[playerId].Add(false);
+        }
 
         IsDie.Add(false);
         IsWalking.Add(false);
-        IsSkill1.Add(false);
-        nowHealthPoint.Add(100);
-        totHealthPotnt.Add(100);
+        NowHealthPoint.Add(100);
+        TotHealthPotnt.Add(100);
     }
     
-    public static void RefreshMessage() {
+    public static void RefreshMessage(string nowPlayer) {
         msg.Optype = 0;
-        skillTag[0] = 0;
+        int nowPlayerId = PlayerMap[nowPlayer];
+        for (int i = 0; i < skills.skill_config_list.Count; i++) {
+            SkillTag[nowPlayerId][i] = 0;
+        }
     }
 
     public static void MovePosition(string username) {
@@ -105,23 +107,7 @@ public class ModelLayer {
         float degree = -90 - gameObject.transform.localEulerAngles.y;
         if (degree < 0) degree += 360;
         degree = degree * Mathf.PI / 180;
-        //Debug.Log(gameObject.name + "   " + gameObject.transform.localEulerAngles.y + "   " + degree);
-        /*if (Input.GetKey(KeyCode.W)) {  // Up
-            horizontal += forward.z;
-            vertical += forward.x;
-        }
-        if (Input.GetKey(KeyCode.S)) {  // Down
-            horizontal -= forward.z;
-            vertical -= forward.x;
-        }
-        if (Input.GetKey(KeyCode.A)) {  // Left
-            horizontal += forward.x;
-            vertical -= forward.z;
-        }
-        if (Input.GetKey(KeyCode.D)) {  // Right
-            horizontal -= forward.x;
-            vertical += forward.z;
-        }*/
+
         if((msg.Optype & (1 << 3)) == 0) msg.Optype += (1 << 3);
         
         msg.Posz = vertical * Mathf.Sin(degree) + horizontal * Mathf.Cos(degree);
@@ -129,19 +115,31 @@ public class ModelLayer {
         //Debug.Log(msg.Posz + "   " + msg.Posx);
     }
     
-    public static void ReleaseSkill1() {
-        if (skillTag[0] == 0) {
+    public static void ReleaseSkill0(string nowPlayer) {
+        int nowPlayerId = PlayerMap[nowPlayer];
+        if (SkillTag[nowPlayerId][0] == 0) {
             //Debug.Log("skill = YES");
-            skillQueue.Enqueue(1 << 4);
-            skillTag[0] = 1;
+            SkillQueue.Enqueue(1 << 4);
+            //msg.Optype += (1 << 4);
+            SkillTag[nowPlayerId][0] = 1;
+        }
+    }
+
+    public static void ReleaseSkill1(string nowPlayer) {
+        int nowPlayerId = PlayerMap[nowPlayer];
+        if (SkillTag[nowPlayerId][1] == 0) {
+            //Debug.Log("skill = YES");
+            SkillQueue.Enqueue(1 << 5);
+            //msg.Optype += (1 << 5);
+            SkillTag[nowPlayerId][1] = 1;
         }
     }
 
     public static void SendMessage() {
         //Debug.Log(msg.Optype + "   " + msg.Posx + "   " + msg.Posy + "   " + msg.Posz);
         //Debug.Log(msg.Optype);
-        while (skillQueue.Count != 0) {
-            int skill = skillQueue.Dequeue();
+        while (SkillQueue.Count != 0) {
+            int skill = SkillQueue.Dequeue();
             //Debug.Log("skill = " + skill);
             msg.Optype += skill;
         }
@@ -170,7 +168,7 @@ public class ModelLayer {
                         //Debug.Log("Username = " + recv.Username);
                         //Debug.Log("clientFrame = " + clientFrame);
 
-                        int playerId = playerMap[recv.Username];
+                        int playerId = PlayerMap[recv.Username];
                         //Debug.Log("username = " + recv.Username);
                         //Debug.Log("playerid = " + playerId);
                         //Debug.Log("playerid hearusername = " + playerName[playerId]);
@@ -178,7 +176,7 @@ public class ModelLayer {
                         if ((recv.Optype & (1 << 3)) != 0) {  // Move
                             Vector3 move = new Vector3(recv.Posx, recv.Posy, recv.Posz);
 
-                            playerPos[playerId] += move;
+                            PlayerPos[playerId] += move;
                             //Debug.Log(recv.Username + "   " + move);
                             //Vector3 trans = new Vector3(forward.x, forward.y, forward.z);
                             //Debug.Log(nowPos + "   " + trans);
@@ -186,54 +184,76 @@ public class ModelLayer {
                             IsWalking[playerId] = !Mathf.Approximately(recv.Posx, 0f) || !Mathf.Approximately(recv.Posz, 0f);
                             //Debug.Log(recv.Posx + "   " + recv.Posz + (!Mathf.Approximately(recv.Posx, 0f) || !Mathf.Approximately(recv.Posz, 0f)));
                         }
-                        if (clientFrame >= skillNextFrame[playerId]) {  // Skill
-                            //Debug.Log(recv.Username);
-                            if ((recv.Optype & (1 << 4)) != 0) {
-                                List<int> skillFrame = skillAttackFrame[playerId];
-                                foreach (int x in skillFrame) {
-                                    Skill newSkill = new Skill(playerId, clientFrame + x - 1, playerPos[playerId], skillAreaType[playerId], skillRadius[playerId], skillDamage[playerId]);
-                                    allSkillRelease.Add(newSkill);
-                                }
-                                /*for (int j = 0; j < playerName.Count; j++) {
-                                    int nowPlayerId = playerMap[playerName[j]];
-                                    if (nowPlayerId != playerId && IsDie[nowPlayerId] == false) {
-                                        nowHealthPoint[nowPlayerId] -= skillDamage[nowPlayerId];
-                                        if (nowHealthPoint[nowPlayerId] < 0) {
-                                            nowHealthPoint[nowPlayerId] = 0;
-                                            IsDie[nowPlayerId] = true;
-                                        }
-                                        //Debug.Log(playerId + "   " + nowHealthPoint[playerId]);
-                                    }
-                                }*/
-                                skillNextFrame[playerId] = clientFrame + skillCoolDown[playerId] - 1;
-                                skillAnimation[playerId] = clientFrame + skillTotFrame[playerId] - 1;
-                                IsSkill1[playerId] = true;
+
+
+                        for (int j = 0; j < skills.skill_config_list.Count; j++) {
+                            if (clientFrame < SkillAnimation[playerId][j]) {
+                                IsSkill[playerId][j] = true;
+                            } else {
+                                IsSkill[playerId][j] = false;
                             }
                         }
-                        if (clientFrame < skillAnimation[playerId]) {
-                            IsSkill1[playerId] = true;
-                        } else {
-                            IsSkill1[playerId] = false;
+                        bool nowState = false;
+                        for (int j = 0; j < 2; j++) {
+                            nowState |= IsSkill[playerId][j];
                         }
-                        
-                        for (int j = allSkillRelease.Count - 1; j >= 0; j--) {
-                            Skill nowSkill = allSkillRelease[j];
-                            if (nowSkill.attackFrame == clientFrame) {
-                                for (int k = 0; k < playerName.Count; k++) {
-                                    int nowPlayerId = playerMap[playerName[k]];
-                                    //Debug.Log("nowPlayerId = " + nowPlayerId + ", nowplayerName = " + playerName[nowPlayerId]);
-                                    //Debug.Log("playerId = " + playerId + ", playerName = " + recv.Username);
-                                    //Debug.Log("releasePosition = " + nowSkill.releasePosition + ", playerPosition = " + playerPos[nowPlayerId]);
-                                    if (nowPlayerId != nowSkill.releasePlayerIndex && IsDie[nowPlayerId] == false && (nowSkill.releasePosition - playerPos[nowPlayerId]).sqrMagnitude <= nowSkill.radius) {
-                                        //Debug.Log("dddddd");
-                                        nowHealthPoint[nowPlayerId] -= nowSkill.damage;
-                                        if (nowHealthPoint[nowPlayerId] < 0) {
-                                            nowHealthPoint[nowPlayerId] = 0;
-                                            IsDie[nowPlayerId] = true;
+
+                        if (nowState == false) {
+                            if (clientFrame >= SkillNextFrame[playerId][0]) {  // Skill0
+                                //Debug.Log(recv.Username);
+                                Skill_data skill0 = skills.skill_config_list[0];
+                                if ((recv.Optype & (1 << 4)) != 0) {
+                                    //List<int> skillFrame = skillAttackFrame[playerId];
+                                    List<int> skillFrame = skill0.skill_attack_frame;
+                                    foreach (int x in skillFrame) {
+                                        //Skill newSkill = new Skill(playerId, clientFrame + x - 1, playerPos[playerId], skillAreaType[playerId], skillRadius[playerId], skillDamage[playerId]);
+                                        Skill newSkill = new Skill(playerId, clientFrame + x - 1, PlayerPos[playerId], skill0.skill_area_type, skill0.skill_radius, skill0.skill_damage);
+                                        AllSkillRelease.Add(newSkill);
+                                    }
+                                    //skillNextFrame[playerId] = clientFrame + skillCoolDown[playerId] - 1;
+                                    SkillNextFrame[playerId][0] = clientFrame + skill0.skill_cool_down - 1;
+                                    //skillAnimation[playerId] = clientFrame + skillTotFrame[playerId] - 1;
+                                    SkillAnimation[playerId][0] = clientFrame + skill0.skill_tot_frame - 1;
+                                    IsSkill[playerId][0] = true;
+                                }
+                            }
+                            if (clientFrame >= SkillNextFrame[playerId][1]) { // Skill1
+                                Skill_data skill1 = skills.skill_config_list[1];
+                                if ((recv.Optype & (1 << 5)) != 0) {
+                                    List<int> skillFrame = skill1.skill_attack_frame;
+                                    /*foreach (int x in skillFrame) {
+                                        Skill newSkill = new Skill(playerId, clientFrame + x - 1, PlayerPos[playerId], skill1.skill_area_type, skill1.skill_radius, skill1.skill_damage);
+                                        AllSkillRelease.Add(newSkill);
+                                    }*/
+                                    SkillNextFrame[playerId][1] = clientFrame + skill1.skill_cool_down - 1;
+                                    SkillAnimation[playerId][1] = clientFrame + skill1.skill_tot_frame - 1;
+                                    IsSkill[playerId][1] = true;
+                                }
+                            }
+
+                            for (int j = AllSkillRelease.Count - 1; j >= 0; j--) {
+                                Skill nowSkill = AllSkillRelease[j];
+                                if (nowSkill.attackFrame == clientFrame) {
+                                    for (int k = 0; k < PlayerName.Count; k++) {
+                                        int nowPlayerId = PlayerMap[PlayerName[k]];
+                                        //Debug.Log("nowPlayerId = " + nowPlayerId + ", nowplayerName = " + playerName[nowPlayerId]);
+                                        //Debug.Log("playerId = " + playerId + ", playerName = " + recv.Username);
+                                        //Debug.Log("releasePosition = " + nowSkill.releasePosition + ", playerPosition = " + playerPos[nowPlayerId]);
+                                        if (nowPlayerId != nowSkill.releasePlayerIndex && IsDie[nowPlayerId] == false) {
+                                            //Debug.Log("dddddd");
+                                            bool releaseTag = false;
+                                            if (nowSkill.areaType == 1 && (nowSkill.releasePosition - PlayerPos[nowPlayerId]).sqrMagnitude <= nowSkill.radius) releaseTag = true;
+                                            if (releaseTag == true) {
+                                                NowHealthPoint[nowPlayerId] -= nowSkill.damage;
+                                                if (NowHealthPoint[nowPlayerId] < 0) {
+                                                    NowHealthPoint[nowPlayerId] = 0;
+                                                    IsDie[nowPlayerId] = true;
+                                                }
+                                            }
                                         }
                                     }
+                                    AllSkillRelease.Remove(AllSkillRelease[j]);
                                 }
-                                allSkillRelease.Remove(allSkillRelease[j]);
                             }
                         }
                     }
